@@ -1,0 +1,203 @@
+class Carte :
+    "Une carte d'un jeu 52 cartes"
+    
+    valeurs = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,'10': 10, 'Valet': 11, 'Dame': 12, 'Roi': 13, 'As': 14}
+    
+    def __init__(self, nom, couleur) :
+        self.nom = nom   
+        self.valeur = Carte.valeurs[nom] # 1er attribut valeur {de 2 à 14 pour as}
+        self.couleur = couleur # 2e attribut {'pique','carreau','coeur','trefle'}
+    
+    def getAttributs(self):
+        return (self.nom,self.couleur)
+
+    def getValeur(self): 
+         return self.valeur
+
+    def getCouleur(self): 
+         return self.couleur
+
+    def getNom (self):
+        return self.nom
+
+    def egalite(self, carte):
+        ''' Renvoie True si les cartes self et carte ont même valeur, False sinon 
+        carte: Objet de type Carte '''
+        return self.valeur == carte.valeur
+        
+    def estSuperieureA(self, carte):
+        ''' Renvoie True si la valeur de self est supérieure à celle de carte,
+        False sinon  ; carte: Objet de type Carte '''
+        return self.valeur > carte.valeur
+    
+    def estInferieureA(self, carte):
+        ''' Renvoie True si la valeur de self est inférieure à celle de carte,
+        False sinon ;   carte: Objet de type Carte'''
+        return self.valeur < carte.valeur
+    
+
+
+class JeuDeCartes:
+    def __init__(self,nombreCarte=52):
+        assert nombreCarte==32 or nombreCarte==52, "nombre de cartes dans le jeu incorrect"
+        # Tous les attributs ne sont peut être pas représentés
+        self.nombreCarte=nombreCarte
+        self.paquetCarte=[]
+        self.creerPaquet()
+   
+    def getNombreCartes(self):          # Accesseur de l'attribut self.nombreCarte
+        return self.nombreCarte
+   
+    def getPaquet(self):                # Accesseur de self.paquetCarte
+        return self.paquetCarte
+      
+    def creerPaquet(self):              # Méthode de création du paquet de cartes
+        couleurs =['pique','carreau','coeur','trefle']    
+        if self.nombreCarte==52 :
+            for i in ['2','3','4','5','6','7','8','9','10','Valet','Dame','Roi','As']:
+                for j in couleurs :         # on remplit la liste self.paquetCarte
+                    self.paquetCarte.append(Carte(i,j))
+        else :
+            for i in ['7','8','9','10','Valet','Dame','Roi','As']:
+                for j in couleurs :         # on remplit la liste self.paquetCarte
+                    self.paquetCarte.append(Carte(i,j))    
+    
+    def distribuerUneCarte(self) :      # Méthode de distribution d'une carte à la fois
+        return self.paquetCarte.pop(0)  # retourne une instance de Carte
+  
+    def melanger(self, force=5000):                 # méthode pour mélanger self.paquetCarte
+        from random import randint
+        for _ in range (50000):
+            i = randint(0,self.nombreCarte-1)
+            j = randint(0,self.nombreCarte-1)
+            self.paquetCarte[i],self.paquetCarte[j]=self.paquetCarte[j],self.paquetCarte[i]
+    
+    def getAttribsCarteDistribuee(self):
+        return self.distribuerUneCarte().getAttributs()
+
+
+
+class Maillon:
+  def __init__(self, valeur, precedent=None, suivant=None):
+    self.valeur = valeur
+    self.precedent = precedent
+    self.suivant = suivant
+
+class File:
+  def __init__(self):
+    self.debut = None
+    self.fin = None
+    self.longueur = 0
+
+  def getNombre(self):
+    return self.longueur
+
+  def enfiler(self, valeur):
+    if self.debut == None :
+      self.debut = self.fin = Maillon(valeur)
+      self.longueur += 1
+    else:
+      self.fin = Maillon(valeur, self.fin)
+      self.fin.precedent.suivant = self.fin
+      self.longueur += 1
+
+  def defiler(self):
+    if self.debut != None :
+      valeur = self.debut.valeur
+      self.longueur -= 1
+      if self.fin != self.debut :  # et non None
+        self.debut = self.debut.suivant
+        self.debut.precedent = None
+      else:
+        self.debut = self.fin = None
+      return valeur
+
+  def estVide(self):
+    return self.debut == None
+
+
+  def __str__(self):
+    ch="etat : "
+    if self.debut == None :
+      return ch+"vide ;"
+    maillon = self.debut
+    while maillon != None:
+      ch += str(maillon.valeur.getAttributs())+" ; "    
+      maillon = maillon.suivant
+    return ch
+
+
+
+paquetAlice=File()
+paquetBob=File()
+
+def initialisationJeu(nombreCartes,paquetAlice,paquetBob):
+    """crée les files de cartes d'Alice et de Bob (26 cartes chacun)"""
+    mon_jeu = JeuDeCartes(nombreCartes)
+    mon_jeu.melanger()
+    for i in range (nombreCartes//2):
+        paquetAlice.enfiler(mon_jeu.distribuerUneCarte())
+        paquetBob.enfiler(mon_jeu.distribuerUneCarte())
+
+pioche = File()
+
+def manche(paquetAlice,paquetBob,pioche):
+    """fait tirer une carte à chaque joueur et place les cartes gagnées dans le bon paquet"""
+    carteAlice = paquetAlice.defiler()
+    carteBob = paquetBob.defiler()
+    if carteBob.getValeur()>carteAlice.getValeur():
+        paquetBob.enfiler(carteBob)
+        paquetBob.enfiler(carteAlice)
+        while not pioche.estVide():
+            paquetBob.enfiler(pioche.defiler())
+    elif carteBob.egalite(carteAlice) :
+        pioche.enfiler(carteBob)
+        pioche.enfiler(carteAlice)
+        if not paquetAlice.estVide():
+            carteAlice = paquetAlice.defiler()
+            pioche.enfiler(carteAlice)
+        if not paquetBob.estVide():
+            carteBob = paquetBob.defiler()
+            pioche.enfiler(carteBob)
+        if not(paquetAlice.estVide()):
+            if not(paquetBob.estVide()):
+                manche(paquetAlice,paquetBob,pioche)
+            else : 
+                while not pioche.estVide():
+                    paquetAlice.enfiler(pioche.defiler())
+        else : 
+            while not pioche.estVide():
+                paquetBob.enfiler(pioche.defiler())
+    else : 
+        paquetAlice.enfiler(carteBob)
+        paquetAlice.enfiler(carteAlice)
+        while not pioche.estVide():
+            paquetAlice.enfiler(pioche.defiler())
+
+def jouons():
+    initialisationJeu(32,paquetAlice,paquetBob)    
+    nb_manches = 0
+    alice_Mène = 0
+    bob_Mène = 0
+    nb_manches_max = 500000
+    while not paquetAlice.estVide() and not paquetBob.estVide() and nb_manches < nb_manches_max  :
+        manche(paquetAlice,paquetBob,pioche)
+        nb_manches += 1
+        if paquetAlice.longueur>paquetBob.longueur:
+            alice_Mène+=1
+        elif paquetAlice.longueur<paquetBob.longueur:
+            bob_Mène +=1
+
+    if paquetAlice.estVide():
+        print(f"Bob gagne en {nb_manches} manches ")
+    elif paquetBob.estVide() :
+        print(f"Alice gagne en {nb_manches} manches ")
+    else : 
+        if alice_Mène>bob_Mène:
+            print(f"pas de gagnant après {nb_manches} manches, mais Alice a mené {alice_Mène} fois et Bob {bob_Mène} fois sur {nb_manches_max} tours")
+        elif alice_Mène==bob_Mène:
+            print(f"pas de gagnant après {nb_manches} manches, et Alice et Bob ont mené le même nb de fois")
+        else :
+            print(f"pas de gagnant après {nb_manches} manches, mais Bob a mené {bob_Mène} fois et Alice {alice_Mène} fois sur {nb_manches_max} tours")
+
+jouons()
