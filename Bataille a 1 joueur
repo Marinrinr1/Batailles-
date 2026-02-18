@@ -1,0 +1,153 @@
+import random
+class Carte:
+    def __init__(self, valeur, couleur):
+        self.valeur = valeur
+        self.couleur = couleur
+
+    def getValeur(self):
+        return self.valeur
+
+    def getCouleur(self):
+        return self.couleur
+
+    def __str__(self):
+        noms_cartes = {
+            11: "Valet",
+            12: "Dame",
+            13: "Roi",
+            14: "As"
+        }
+        nom_valeur = noms_cartes.get(self.valeur, str(self.valeur))
+        return f"{nom_valeur} de {self.couleur}"
+
+
+def creationJDC():
+    jeu_de_cartes = []
+    couleurs = ["Coeur", "Trèfle", "Pique",
+                "Carreau"]
+
+    for couleur in couleurs:
+        for valeur in range(2, 15):
+            jeu_de_cartes.append(Carte(valeur, couleur))
+
+    return jeu_de_cartes
+
+
+def distribution(liste):
+    M1, M2 = [], []
+    if len(liste) != 52:
+        print("Il n'y a pas le bon nombre de carte")
+        return None
+    else:
+        try:
+            random.shuffle(liste)
+        except TypeError:
+            print("Erreur: n'est pas une liste")
+    for i in range(0, 52):
+        if i % 2 == 0:
+            M1.append((liste[0].getValeur(),liste[0].getCouleur()))
+            liste.pop(0)
+        else:
+            M2.append((liste[0].getValeur(),liste[0].getCouleur()))
+            liste.pop(0)
+    if len(M1) == len(M2):
+        return M1, M2, 0, []
+
+
+def affichageWinner(M1, M2, i):
+    SymbolesCouleur = {
+        "Coeur": "❤️",
+        "Pique": "♠️",
+        "Carreau": "♦️",
+        "Trèfle": "♣️"
+    }
+
+    CarteVal1, C1C= M1[i]
+    CarteVal2, C2C = M2[i]
+    SymboleM1 = SymbolesCouleur.get(C1C, "?")
+    SymboleM2 = SymbolesCouleur.get(C2C, "?")
+
+    # Cadre d'affichage commun
+    ligne_separation = "-" * 70
+    print(ligne_separation)
+    print(f"//{' ' * 68}//")
+
+    if CarteVal1 > CarteVal2:
+        print(f"//                 {CarteVal1} de {SymboleM1}       >>>       {CarteVal2} de {SymboleM2}                   //")
+        print(f"//{' ' * 68}//")
+        print(ligne_separation)
+        print("La carte du Joueur 1 est supérieure à la carte du Joueur 2. Le Joueur 1 emporte la manche.\n")
+        return 1
+
+    elif CarteVal1 < CarteVal2:
+        print(f"//                 {CarteVal1} de {SymboleM1}       <<<       {CarteVal2} de {SymboleM2}                   //")
+        print(f"//{' ' * 68}//")
+        print(ligne_separation)
+        print("La carte du Joueur 2 est supérieure à la carte du Joueur 1. Le Joueur 2 emporte la manche.\n")
+        return 2
+
+    else:
+        print(f"//   {CarteVal1} de {SymboleM1}     // BATAILLE //     {CarteVal2} de {SymboleM2}     //")
+        print(f"//{' ' * 68}//")
+        print(ligne_separation)
+        print("Les deux cartes sont de valeur égale. C'est une BATAILLE !\n")
+        return 0
+
+
+
+def Jeux(M1,M2,i,P):
+    Prize = P
+    if len(M1) == 0:
+        print("Fin du Jeu: M2 gagne")
+    elif len(M2) == 0:
+        print("Fin du Jeu: M1")
+    else:
+      if M1[i][0] > M2[i][0]:
+        affichageWinner(M1,M2,i)
+        w=M1.pop(i)
+        l=M2.pop(i)
+        Prize.append(w)
+        Prize.append(l)
+        M1.append(Prize)
+        Reponse = 0
+        try:
+            while Reponse != 1 or 2:
+                Reponse = int(input("Veuillez rentrer 1 si vous voulez continuer de jouer, 2 si vous voulez arreter: "))
+                if Reponse == 1:
+                    return Jeux(M1, M2, 0,[])
+                elif Reponse == 2:
+                    exit()
+                else:
+                    Reponse = int(input("Veuillez rentrer une reponse valide"))
+        except TypeError:
+            print("Erreur: n'est pas un int")
+      elif M1[i][0]==M2[i][0]:
+        affichageWinner(M1,M2,i)
+        w = M1.pop(i)
+        l = M2.pop(i)
+        Prize.append(w)
+        Prize.append(l)
+        return Jeux(M1,M2,i+1,Prize)
+      else:
+        affichageWinner(M1,M2,i)
+        w = M1.pop(i)
+        l = M2.pop(i)
+        Prize.append(w)
+        Prize.append(l)
+        M2.append(Prize)
+        Reponse=0
+        try:
+          while Reponse != 1 or 2:
+             Reponse = int(input("Veuillez rentrer 1 si vous voulez continuer de jouer, 2 si vous voulez arreter: "))
+             if Reponse == 1:
+                return Jeux(M1,M2,0,[])
+             elif Reponse ==2:
+                exit()
+             else:
+                Reponse = int(input("Veuillez rentrer une reponse valide"))
+        except TypeError:
+            print("Erreur: n'est pas un int")
+
+Veyon = creationJDC()
+MrTessier = distribution(Veyon)
+Jeux(*MrTessier)
